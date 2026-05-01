@@ -4,6 +4,7 @@ import Network
 struct SettingsView: View {
     @EnvironmentObject private var vm: TerminalViewModel
     @State private var localIP: String = "—"
+    @State private var showAPIKey = false
 
     var body: some View {
         NavigationStack {
@@ -24,12 +25,14 @@ struct SettingsView: View {
                     }
                     HStack {
                         Circle().fill(vm.glassesServer.isRunning ? .cyan : .red).frame(width: 8, height: 8)
-                        Text(vm.isGlassesWatching ? "\(vm.glassesServer.clientCount) glasses connected" : "No glasses connected")
+                        Text(vm.isGlassesWatching
+                             ? "\(vm.glassesServer.clientCount) glasses connected"
+                             : "No glasses connected")
                             .foregroundStyle(vm.isGlassesWatching ? .cyan : .secondary)
                     }
                 }
 
-                // MARK: Companion script instructions
+                // MARK: Companion script
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("On your Windows PC, run:")
@@ -47,7 +50,107 @@ struct SettingsView: View {
                     Text("Companion Script")
                 }
 
-                // MARK: Glasses display
+                // MARK: Voice Commands
+                Section {
+                    Picker("Voice Mode", selection: Binding(
+                        get:  { vm.voiceMode },
+                        set:  { vm.setVoiceMode($0) }
+                    )) {
+                        ForEach(VoiceMode.allCases) { mode in
+                            Label(mode.displayName, systemImage: mode.icon).tag(mode)
+                        }
+                    }
+                    Text(vm.voiceMode.description)
+                        .font(.caption).foregroundStyle(.secondary)
+
+                    HStack {
+                        Circle()
+                            .fill(vm.speech.isAvailable ? .green : .orange)
+                            .frame(width: 8, height: 8)
+                        Text(vm.speech.isAvailable
+                             ? "Microphone ready"
+                             : "Microphone permission needed")
+                            .foregroundStyle(vm.speech.isAvailable ? .primary : .orange)
+                    }
+
+                    if !vm.speech.isAvailable {
+                        Button("Open Privacy Settings") {
+                            if let url = URL(string: UIApplication.openSettingsURLString) {
+                                UIApplication.shared.open(url)
+                            }
+                        }
+                        .foregroundStyle(.cyan)
+                    }
+
+                    Text("Tap 🎤 in the Terminal tab, or glasses can send {\"type\":\"mic\"} to trigger the iPhone mic remotely.")
+                        .font(.caption).foregroundStyle(.secondary)
+                } header: {
+                    Text("Voice Commands")
+                }
+
+                // MARK: AI Settings
+                Section {
+                    Picker("AI Provider", selection: Binding(
+                        get:  { vm.aiProvider },
+                        set:  { vm.setAIProvider($0) }
+                    )) {
+                        ForEach(AICommandManager.AIProvider.allCases) { p in
+                            Text(p.displayName).tag(p)
+                        }
+                    }
+
+                    HStack {
+                        if showAPIKey {
+                            TextField("API Key", text: Binding(
+                                get:  { vm.aiApiKey },
+                                set:  { vm.setAIApiKey($0) }
+                            ))
+                            .font(.system(.footnote, design: .monospaced))
+                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.never)
+                        } else {
+                            SecureField("API Key", text: Binding(
+                                get:  { vm.aiApiKey },
+                                set:  { vm.setAIApiKey($0) }
+                            ))
+                            .font(.system(.footnote, design: .monospaced))
+                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.never)
+                        }
+                        Button {
+                            showAPIKey.toggle()
+                        } label: {
+                            Image(systemName: showAPIKey ? "eye.slash" : "eye")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    TextField(
+                        "Model (leave blank for default: \(vm.aiProvider.defaultModel))",
+                        text: Binding(
+                            get:  { vm.aiModel },
+                            set:  { vm.setAIModel($0) }
+                        )
+                    )
+                    .font(.system(.footnote, design: .monospaced))
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("How AI mode works")
+                            .font(.caption.weight(.semibold))
+                        Text("You speak (or type) a natural-language request.\nThe AI converts it to a PowerShell command.\nThe command is shown on the glasses, then auto-executed on the PC.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.top, 2)
+                } header: {
+                    Label("AI Assist", systemImage: "sparkles")
+                } footer: {
+                    Text("In AI Assist mode, dangerous commands automatically get -WhatIf appended for safety.")
+                }
+
+                // MARK: Glasses Display
                 Section("Glasses Display") {
                     Toggle("Stream to glasses", isOn: Binding(
                         get:  { vm.streamToGlasses },
@@ -92,7 +195,7 @@ struct SettingsView: View {
                 Section("About") {
                     LabeledContent("App",      value: "Rokid PowerShell HUD")
                     LabeledContent("Protocol", value: "TCP :8102 (PC) + :8101 (glasses)")
-                    LabeledContent("Version",  value: "1.0")
+                    LabeledContent("Version",  value: "1.1")
                 }
             }
             .navigationTitle("Settings")

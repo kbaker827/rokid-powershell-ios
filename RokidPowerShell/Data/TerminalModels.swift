@@ -17,20 +17,26 @@ struct TerminalLine: Identifiable, Equatable {
     }
 
     enum LineType {
-        case output   // stdout — white
-        case error    // stderr — red
-        case prompt   // PS prompt — cyan
-        case command  // typed command — yellow
-        case system   // app messages — gray
+        case output      // stdout — white
+        case error       // stderr — red
+        case prompt      // PS prompt — cyan
+        case command     // typed command — yellow
+        case system      // app messages — gray
+        case voice       // voice transcript — magenta
+        case aiThinking  // AI is generating — purple
+        case aiCommand   // AI-generated PS command — green
     }
 
     var color: Color {
         switch type {
-        case .output:  return Color(.lightGray)
-        case .error:   return .red
-        case .prompt:  return Color(red: 0.3, green: 0.9, blue: 1.0)
-        case .command: return .yellow
-        case .system:  return Color(.darkGray)
+        case .output:     return Color(.lightGray)
+        case .error:      return .red
+        case .prompt:     return Color(red: 0.3, green: 0.9, blue: 1.0)
+        case .command:    return .yellow
+        case .system:     return Color(.darkGray)
+        case .voice:      return Color(red: 1.0, green: 0.4, blue: 0.9)
+        case .aiThinking: return Color(red: 0.7, green: 0.5, blue: 1.0)
+        case .aiCommand:  return Color(red: 0.3, green: 1.0, blue: 0.5)
         }
     }
 
@@ -65,6 +71,33 @@ enum GlassesFormat: String, CaseIterable, Identifiable {
         case .lastLines:  return "Streams last 3 lines (prompt + output)"
         case .outputOnly: return "Output/error lines only, no prompts"
         case .minimal:    return "Current prompt + most recent output line"
+        }
+    }
+}
+
+// MARK: - Voice mode
+
+enum VoiceMode: String, CaseIterable, Identifiable {
+    case direct = "direct"
+    case ai     = "ai"
+
+    var id: String { rawValue }
+    var displayName: String {
+        switch self {
+        case .direct: return "Direct"
+        case .ai:     return "AI Assist"
+        }
+    }
+    var description: String {
+        switch self {
+        case .direct: return "Speak a command → runs immediately on the PC"
+        case .ai:     return "Speak anything → AI converts to PowerShell → runs on the PC"
+        }
+    }
+    var icon: String {
+        switch self {
+        case .direct: return "mic.circle.fill"
+        case .ai:     return "sparkles"
         }
     }
 }

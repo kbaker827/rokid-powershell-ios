@@ -13,6 +13,10 @@
     <key>LSRequiresIPhoneOS</key><true/>
     <key>NSLocalNetworkUsageDescription</key>
     <string>Rokid PowerShell bridges your Windows PC PowerShell session to Rokid AR glasses via TCP on the local network.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Rokid PowerShell uses the microphone to listen for voice commands you can speak directly to your PowerShell session or AI assistant.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Rokid PowerShell transcribes your voice into PowerShell commands (or sends them to AI for conversion) so you can control your PC hands-free.</string>
     <key>NSBonjourServices</key>
     <array><string>_http._tcp</string></array>
     <key>UIBackgroundModes</key>

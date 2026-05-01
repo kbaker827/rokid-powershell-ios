@@ -15,6 +15,8 @@
 		F0061000 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0060000 /* ContentView.swift */; };
 		F0071000 /* TerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0070000 /* TerminalView.swift */; };
 		F0081000 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0080000 /* SettingsView.swift */; };
+		F0091000 /* SpeechManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0090000 /* SpeechManager.swift */; };
+		F00A1000 /* AICommandManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F00A0000 /* AICommandManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,13 +30,27 @@
 		F0060000 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		F0070000 /* TerminalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalView.swift; sourceTree = "<group>"; };
 		F0080000 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		F0090000 /* SpeechManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechManager.swift; sourceTree = "<group>"; };
+		F00A0000 /* AICommandManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AICommandManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileReference section (Frameworks) */
+		F0FF0001 /* Speech.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Speech.framework; path = System/Library/Frameworks/Speech.framework; sourceTree = SDKROOT; };
+		F0FF0002 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section (Frameworks) */
+
+/* Begin PBXBuildFile section (Frameworks) */
+		F0FF1001 /* Speech.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F0FF0001 /* Speech.framework */; };
+		F0FF1002 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F0FF0002 /* AVFoundation.framework */; };
+/* End PBXBuildFile section (Frameworks) */
 
 /* Begin PBXFrameworksBuildPhase section */
 		F0000010 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F0FF1001 /* Speech.framework in Frameworks */,
+				F0FF1002 /* AVFoundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -83,6 +99,8 @@
 			isa = PBXGroup;
 			children = (
 				F0030000 /* PCBridgeServer.swift */,
+				F0090000 /* SpeechManager.swift */,
+				F00A0000 /* AICommandManager.swift */,
 			);
 			path = Service;
 			sourceTree = "<group>";
@@ -113,11 +131,21 @@
 			path = UI;
 			sourceTree = "<group>";
 		};
+		F0FFFF00 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F0FF0001 /* Speech.framework */,
+				F0FF0002 /* AVFoundation.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		F0AAAAAA /* root */ = {
 			isa = PBXGroup;
 			children = (
 				F0000300 /* RokidPowerShell */,
 				F0000200 /* Products */,
+				F0FFFF00 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -192,6 +220,8 @@
 				F0011000 /* RokidPowerShellApp.swift in Sources */,
 				F0021000 /* TerminalModels.swift in Sources */,
 				F0031000 /* PCBridgeServer.swift in Sources */,
+				F0091000 /* SpeechManager.swift in Sources */,
+				F00A1000 /* AICommandManager.swift in Sources */,
 				F0041000 /* GlassesServer.swift in Sources */,
 				F0051000 /* TerminalViewModel.swift in Sources */,
 				F0061000 /* ContentView.swift in Sources */,

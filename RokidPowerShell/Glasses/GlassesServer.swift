@@ -2,14 +2,23 @@ import Foundation
 import Network
 
 /// TCP server on :8101 — streams terminal lines to Rokid glasses.
+/// Also receives commands FROM glasses:
+///   {"type":"mic"}               → trigger iPhone mic
+///   {"type":"cmd","text":"..."}  → run command directly on PC
+///   {"type":"ai","text":"..."}   → convert text via AI then run on PC
 @MainActor
 final class GlassesServer: ObservableObject {
 
     @Published var isRunning   = false
     @Published var clientCount = 0
 
+    /// Callbacks to ViewModel for inbound glasses messages
+    var onMicTrigger:      (() -> Void)?
+    var onGlassesCommand:  ((String) -> Void)?
+    var onGlassesAI:       ((String) -> Void)?
+
     private var listener:    NWListener?
-    private var connections: [NWConnection] = []
+    private var connections: [GlassesConnection] = []
     private let port: NWEndpoint.Port = 8101
     private let queue = DispatchQueue(label: "PSGlassesQ", qos: .userInitiated)
 
@@ -30,7 +39,7 @@ final class GlassesServer: ObservableObject {
 
     func stop() {
         listener?.cancel(); listener = nil
-        connections.forEach { $0.cancel() }
+        connections.forEach { $0.connection.cancel() }
         connections.removeAll()
         clientCount = 0; isRunning = false
     }
@@ -43,11 +52,14 @@ final class GlassesServer: ObservableObject {
         guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         let typeCode: String
         switch line.type {
-        case .output:  typeCode = "output"
-        case .error:   typeCode = "error"
-        case .prompt:  typeCode = "prompt"
-        case .command: typeCode = "command"
-        case .system:  typeCode = "system"
+        case .output:     typeCode = "output"
+        case .error:      typeCode = "error"
+        case .prompt:     typeCode = "prompt"
+        case .command:    typeCode = "command"
+        case .system:     typeCode = "system"
+        case .voice:      typeCode = "voice"
+        case .aiThinking: typeCode = "ai_thinking"
+        case .aiCommand:  typeCode = "ai_command"
         }
         send(type: typeCode, text: text)
     }
@@ -59,11 +71,29 @@ final class GlassesServer: ObservableObject {
         send(type: "terminal", text: text)
     }
 
-    func broadcastClear() { send(type: "clear", text: "") }
-
+    func broadcastClear()           { send(type: "clear",  text: "") }
     func broadcastStatus(_ msg: String) { send(type: "status", text: msg) }
 
-    // MARK: - Private
+    /// Tell glasses that the iPhone mic is now listening.
+    func broadcastListening(_ active: Bool) {
+        send(type: "voice_state", text: active ? "listening" : "idle")
+    }
+
+    /// Show voice transcript (partial or final) on glasses.
+    func broadcastVoiceTranscript(_ text: String, isFinal: Bool) {
+        send(type: isFinal ? "voice_final" : "voice_partial", text: text)
+    }
+
+    /// Show AI thinking / generated command on glasses.
+    func broadcastAIThinking(_ text: String) {
+        send(type: "ai_thinking", text: text)
+    }
+
+    func broadcastAICommand(_ cmd: String) {
+        send(type: "ai_command", text: cmd)
+    }
+
+    // MARK: - Private helpers
 
     private func buildSnapshot(_ lines: [TerminalLine], format: GlassesFormat) -> String {
         switch format {
@@ -85,24 +115,79 @@ final class GlassesServer: ObservableObject {
         let dict: [String: String] = ["type": type, "text": text]
         guard let data = try? JSONSerialization.data(withJSONObject: dict) else { return }
         let packet = data + Data([0x0A])
-        connections.forEach { $0.send(content: packet, completion: .contentProcessed { _ in }) }
+        connections.forEach { $0.connection.send(content: packet, completion: .contentProcessed { _ in }) }
     }
 
     private func accept(_ conn: NWConnection) {
-        conn.stateUpdateHandler = { [weak self] state in
+        let wrapper = GlassesConnection(connection: conn)
+        conn.stateUpdateHandler = { [weak self, weak wrapper] state in
             switch state {
             case .failed, .cancelled:
-                Task { @MainActor [weak self] in
-                    self?.connections.removeAll { $0 === conn }
+                Task { @MainActor [weak self, weak wrapper] in
+                    guard let wrapper else { return }
+                    self?.connections.removeAll { $0 === wrapper }
                     self?.clientCount = self?.connections.count ?? 0
                 }
             default: break
             }
         }
         conn.start(queue: queue)
-        connections.append(conn)
+        connections.append(wrapper)
         clientCount = connections.count
-        // Send welcome
-        send(type: "status", text: "Rokid PS HUD connected — waiting for PowerShell on :8102")
+        // Welcome packet
+        send(type: "status", text: "Rokid PS HUD — tap mic or speak a command")
+        // Start receive loop for inbound messages from glasses
+        receiveNext(wrapper)
     }
+
+    // MARK: - Receive from glasses
+
+    private func receiveNext(_ wrapper: GlassesConnection) {
+        wrapper.connection.receive(minimumIncompleteLength: 1, maximumLength: 4096) { [weak self, weak wrapper] data, _, done, err in
+            Task { @MainActor [weak self, weak wrapper] in
+                guard let self, let wrapper else { return }
+                if let d = data, !d.isEmpty {
+                    wrapper.buffer.append(d)
+                    self.flushInbound(wrapper)
+                }
+                if done || err != nil {
+                    // connection ended — handled by stateUpdateHandler
+                } else {
+                    self.receiveNext(wrapper)
+                }
+            }
+        }
+    }
+
+    private func flushInbound(_ wrapper: GlassesConnection) {
+        while let newlineIdx = wrapper.buffer.firstIndex(of: 0x0A) {
+            let lineData = wrapper.buffer[wrapper.buffer.startIndex..<newlineIdx]
+            wrapper.buffer.removeSubrange(wrapper.buffer.startIndex...newlineIdx)
+            guard let raw = String(data: lineData, encoding: .utf8),
+                  let json = try? JSONSerialization.jsonObject(with: Data(raw.utf8)) as? [String: String],
+                  let type = json["type"] else { continue }
+            handleInbound(type: type, text: json["text"] ?? "")
+        }
+    }
+
+    private func handleInbound(type: String, text: String) {
+        switch type {
+        case "mic":
+            onMicTrigger?()
+        case "cmd":
+            if !text.isEmpty { onGlassesCommand?(text) }
+        case "ai":
+            if !text.isEmpty { onGlassesAI?(text) }
+        default:
+            break
+        }
+    }
+}
+
+// MARK: - Per-connection wrapper
+
+private final class GlassesConnection {
+    let connection: NWConnection
+    var buffer = Data()
+    init(connection: NWConnection) { self.connection = connection }
 }
