@@ -1,9 +1,15 @@
 # Rokid PowerShell HUD
 
+
+> **🔵 Connectivity Update — May 2025**
+> The glasses connection has been migrated from **raw TCP sockets** to
+> **Bluetooth via the Rokid AI glasses SDK** (`pod 'RokidSDK' ~> 1.10.2`).
+> No Wi-Fi port forwarding is needed. See **SDK Setup** below.
+
 Live-stream your Windows PowerShell session to Rokid AR glasses — via your iPhone as a wireless bridge. Speak commands hands-free, or let AI convert plain English into PowerShell for you.
 
 ```
-Windows PC  ──TCP :8102──▶  iPhone App  ──TCP :8101──▶  Rokid Glasses
+Windows PC  ──TCP :8102──▶  iPhone App  ──Bluetooth/RokidSDK──▶ Rokid Glasses
              PSCompanion.ps1              (this app)
              (bidirectional)              (bidirectional)
 
@@ -135,7 +141,7 @@ Examples of what you can say:
 
 ## Wire Protocol
 
-### PC → iPhone (port 8102)
+### PC → iPhone (Bluetooth/RokidSDK)
 
 | Prefix | Meaning        | Example                    |
 |--------|----------------|----------------------------|
@@ -145,13 +151,13 @@ Examples of what you can say:
 | `S:`   | system message | `S:Connected: MYPC  14:32` |
 | `CLR:` | clear screen   | `CLR:`                     |
 
-### iPhone → PC (port 8102)
+### iPhone → PC (Bluetooth/RokidSDK)
 
 | Prefix | Meaning       | Example              |
 |--------|---------------|----------------------|
 | `CMD:` | run a command | `CMD:Get-Process\n`  |
 
-### iPhone → Glasses (port 8101)
+### iPhone → Glasses (Bluetooth/RokidSDK)
 
 JSON packets, newline-delimited:
 
@@ -173,7 +179,7 @@ JSON packets, newline-delimited:
 {"type":"status",      "text":"Streaming paused"}
 ```
 
-### Glasses → iPhone (port 8101)
+### Glasses → iPhone (Bluetooth/RokidSDK)
 
 ```json
 {"type":"mic"}
@@ -234,6 +240,7 @@ Tap the **list icon** in the Terminal tab input bar for one-tap presets and the 
 | Windows | PowerShell 7+ (pwsh) recommended; Windows PowerShell 5.1 also works |
 | Glasses | Rokid AR glasses on same Wi-Fi as iPhone |
 | AI Assist | OpenAI or Anthropic API key (optional) |
+| CocoaPods | 1.15+ — run `pod install` after cloning |
 
 **Permissions required on iPhone:**
 - Microphone — for voice commands
