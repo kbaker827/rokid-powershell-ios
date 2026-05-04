@@ -66,7 +66,7 @@ The only thing left for each app is filling in the three credential constants (`
 
 ### 1. Install the iOS app
 
-Open `RokidPowerShell.xcodeproj` in Xcode 15+, select your iPhone as the target, and run.
+Open `RokidPowerShell.xcworkspace` in Xcode 15+ (after running `pod install`) 15+, select your iPhone as the target, and run.
 
 ### 2. Find your iPhone IP
 
@@ -265,7 +265,7 @@ Tap the **list icon** in the Terminal tab input bar for one-tap presets and the 
 | iPhone | iOS 17+, same Wi-Fi as PC |
 | Xcode | 15.0+ |
 | Windows | PowerShell 7+ (pwsh) recommended; Windows PowerShell 5.1 also works |
-| Glasses | Rokid AR glasses on same Wi-Fi as iPhone |
+| Glasses | Rokid AI glasses (paired via Bluetooth — no Wi-Fi needed) |
 | AI Assist | OpenAI or Anthropic API key (optional) |
 | CocoaPods | 1.15+ — run `pod install` after cloning |
 
@@ -281,7 +281,7 @@ Tap the **list icon** in the Terminal tab input bar for one-tap presets and the 
 | Port | Direction | Purpose |
 |------|-----------|---------|
 | 8102 | PC → iPhone | PSCompanion.ps1 connects here |
-| 8101 | Glasses → iPhone | Glasses connect here (bidirectional) |
+| 8101 | *(legacy)* | Glasses now connect via Bluetooth/RokidSDK — port no longer used |
 
 Both ports listen on `0.0.0.0` (all interfaces). Ensure your iPhone's firewall/hotspot allows inbound connections on these ports.
 
