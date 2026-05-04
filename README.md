@@ -1,6 +1,12 @@
 # Rokid PowerShell HUD
 
 
+
+> **🔵 Connectivity Update — May 2025**
+> The glasses connection has been migrated from **raw TCP sockets** to
+> **Bluetooth via the Rokid AI glasses SDK** (`pod 'RokidSDK' ~> 1.10.2`).
+> No Wi-Fi port forwarding is needed. See **SDK Setup** below.
+
 > **🔵 Connectivity Update — May 2025**
 > The glasses connection has been migrated from **raw TCP sockets** to
 > **Bluetooth via the Rokid AI glasses SDK** (`pod 'RokidSDK' ~> 1.10.2`).
